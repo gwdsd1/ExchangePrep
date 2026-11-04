@@ -1107,19 +1107,22 @@ def translate_display_text(programmes: list[Programme], warnings: list[str], pro
 
 
 def research(request: ResearchRequest, *, provider: str | None = None,
-             search_backend: str | None = None) -> ResearchResult:
+             search_backend: str | None = None, api_key: str | None = None,
+             model: str | None = None) -> ResearchResult:
     provider = (provider or os.getenv("EXCHANGEPREP_LLM_PROVIDER", os.getenv("PATHLOOM_LLM_PROVIDER", "openai"))).lower()
     if provider not in {"openai", "deepseek"}:
         raise ValueError("EXCHANGEPREP_LLM_PROVIDER 只能是 openai 或 deepseek")
     key_name = "OPENAI_API_KEY" if provider == "openai" else "DEEPSEEK_API_KEY"
-    key = os.getenv(key_name)
+    key = api_key if api_key is not None else os.getenv(key_name)
+    openai_key = key if provider == "openai" else (None if api_key is not None else os.getenv("OPENAI_API_KEY"))
+    brave_key = None if api_key is not None else os.getenv("BRAVE_API_KEY")
     if not key:
         raise ValueError(f"缺少 {key_name}；请在启动服务前设置环境变量")
     search_backend = (search_backend or os.getenv("EXCHANGEPREP_SEARCH_PROVIDER", os.getenv("PATHLOOM_SEARCH_PROVIDER", "auto"))).lower()
     if search_backend == "auto":
         search_backend = (
-            "brave" if os.getenv("BRAVE_API_KEY") else
-            "openai" if os.getenv("OPENAI_API_KEY") else
+            "brave" if brave_key else
+            "openai" if openai_key else
             "browser" if provider == "deepseek" else
             "manual" if request.programme_url else "none"
         )
@@ -1127,13 +1130,13 @@ def research(request: ResearchRequest, *, provider: str | None = None,
         raise ValueError("实时发现项目需要 OPENAI_API_KEY 或 BRAVE_API_KEY；也可提供具体项目官网链接进行定向调查")
     if search_backend not in {"brave", "openai", "browser", "manual"}:
         raise ValueError("搜索方式只能是 brave、openai、browser 或 manual")
-    if search_backend == "openai" and not os.getenv("OPENAI_API_KEY"):
+    if search_backend == "openai" and not openai_key:
         raise ValueError("OpenAI 网页搜索需要 OPENAI_API_KEY；DeepSeek 模式可改用 BRAVE_API_KEY")
-    if search_backend == "brave" and not os.getenv("BRAVE_API_KEY"):
+    if search_backend == "brave" and not brave_key:
         raise ValueError("Brave 网页搜索需要 BRAVE_API_KEY")
     if search_backend == "manual" and not request.programme_url:
         raise ValueError("定向调查模式需要提供具体项目官网链接")
-    model = os.getenv("OPENAI_MODEL", "gpt-5-mini") if provider == "openai" else os.getenv("DEEPSEEK_MODEL", "deepseek-flash")
+    model = model or (os.getenv("OPENAI_MODEL", "gpt-5-mini") if provider == "openai" else os.getenv("DEEPSEEK_MODEL", "deepseek-flash"))
     now = datetime.now(timezone.utc)
     warnings: list[str] = []
     clues: list[DiscoveryClue] = []
@@ -1149,9 +1152,9 @@ def research(request: ResearchRequest, *, provider: str | None = None,
     kb_urls = knowledge_urls(knowledge_matches)
     with httpx.Client(timeout=20, headers={"User-Agent": "ExchangePrepResearchDemo/0.2 (academic project)"}) as client:
         if search_backend == "brave":
-            discovered = brave_search(client, request, os.environ["BRAVE_API_KEY"])
+            discovered = brave_search(client, request, brave_key)
         elif search_backend == "openai":
-            discovered = openai_search(request, os.environ["OPENAI_API_KEY"], os.getenv("OPENAI_MODEL", "gpt-5-mini"))
+            discovered = openai_search(request, openai_key, (model if provider == "openai" else os.getenv("OPENAI_MODEL", "gpt-5-mini")))
         elif search_backend == "browser":
             try:
                 catalog_urls = hku_catalog_search(client, request)
@@ -1240,12 +1243,12 @@ def research(request: ResearchRequest, *, provider: str | None = None,
             if search_backend == "manual" or len(pages) >= MAX_PAGES:
                 break
             if search_backend == "brave":
-                followup_urls = brave_search_query(client, query, os.environ["BRAVE_API_KEY"])
+                followup_urls = brave_search_query(client, query, brave_key)
             elif search_backend == "browser":
                 followup_urls = [hit["url"] for hit in run_browser_search(query, "gap_followup", search_log)]
             else:
-                followup_urls = openai_search_query(query, os.environ["OPENAI_API_KEY"],
-                                                    os.getenv("OPENAI_MODEL", "gpt-5-mini"))
+                followup_urls = openai_search_query(query, openai_key,
+                                                    (model if provider == "openai" else os.getenv("OPENAI_MODEL", "gpt-5-mini")))
             query_added = 0
             for url in followup_urls:
                 if url in attempted or publisher_type(url) == "social":

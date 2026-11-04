@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: exchangeprep-api
+    runtime: docker
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: EXCHANGEPREP_ALLOWED_ORIGINS
+        value: https://gwdsd1.github.io

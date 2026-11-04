@@ -1,0 +1,847 @@
+{
+  "research": {
+    "schema_version": "1.0",
+    "request": {
+      "language": "en",
+      "destination": "United Kingdom",
+      "start_date": "2027-06-01",
+      "end_date": "2027-08-31",
+      "programme_type": "summer_school",
+      "major": "Computer Science",
+      "year_of_study": 2,
+      "interests": "AI",
+      "nationality": "",
+      "residence": "Hong Kong",
+      "budget": "",
+      "programme_url": null,
+      "max_programmes": 1
+    },
+    "generated_at": "2026-09-28T00:00:00Z",
+    "provider": "offline sample; no live search",
+    "programmes": [
+      {
+        "id": "sample_sao",
+        "name": "HKU SAO short-term study workflow (example, not a specific programme)",
+        "official_url": "https://intlaffairs.hku.hk/backend/faqs/sao-application/",
+        "programme_type": "summer_school",
+        "destination": "Depends on the chosen programme",
+        "dates": {
+          "value": null,
+          "state": "unknown",
+          "evidence": []
+        },
+        "eligibility": [],
+        "costs": [],
+        "past_cases": [],
+        "steps": [
+          {
+            "id": "host_application",
+            "category": "host_application",
+            "title": "Apply to the host institution",
+            "action": {
+              "value": "Submit your programme application directly to the host institution.",
+              "state": "verified",
+              "evidence": [
+                {
+                  "source_id": "S1",
+                  "quote": "Apply with the host institution directly."
+                }
+              ]
+            },
+            "channel": {
+              "value": null,
+              "state": "unknown",
+              "evidence": []
+            },
+            "deadline": {
+              "kind": "unknown",
+              "date": null,
+              "raw": null,
+              "timezone": null,
+              "trigger": null,
+              "state": "unknown",
+              "evidence": []
+            },
+            "documents": [],
+            "prerequisites": [],
+            "applies_if": "You are using the SAO route and meet the applicable eligibility conditions.",
+            "notes": [
+              "Example guidance only. Confirm the actual programme's requirements."
+            ]
+          },
+          {
+            "id": "hku_registration_open",
+            "category": "hku_application",
+            "title": "Start your HKU SAO registration",
+            "action": {
+              "value": "You can start the registration when you plan to apply for a summer programme.",
+              "state": "verified",
+              "evidence": [
+                {
+                  "source_id": "S1",
+                  "quote": "You can open the application as soon as you plan to apply for a summer programme."
+                }
+              ]
+            },
+            "channel": {
+              "value": null,
+              "state": "unknown",
+              "evidence": []
+            },
+            "deadline": {
+              "kind": "none",
+              "date": null,
+              "raw": null,
+              "timezone": null,
+              "trigger": null,
+              "state": "verified",
+              "evidence": [
+                {
+                  "source_id": "S1",
+                  "quote": "You can open the application as soon as you plan to apply for a summer programme."
+                }
+              ]
+            },
+            "documents": [],
+            "prerequisites": [],
+            "applies_if": "You are using the SAO route and meet the applicable eligibility conditions.",
+            "notes": [
+              "Example guidance only. Confirm the actual programme's requirements."
+            ]
+          },
+          {
+            "id": "offer_received",
+            "category": "offer_acceptance",
+            "title": "Receive the host institution's offer",
+            "action": {
+              "value": "Wait for and obtain your admission letter.",
+              "state": "verified",
+              "evidence": [
+                {
+                  "source_id": "S1",
+                  "quote": "After receiving your admission"
+                }
+              ]
+            },
+            "channel": {
+              "value": null,
+              "state": "unknown",
+              "evidence": []
+            },
+            "deadline": {
+              "kind": "unknown",
+              "date": null,
+              "raw": null,
+              "timezone": null,
+              "trigger": null,
+              "state": "unknown",
+              "evidence": []
+            },
+            "documents": [],
+            "prerequisites": [
+              "host_application"
+            ],
+            "applies_if": "You are using the SAO route and meet the applicable eligibility conditions.",
+            "notes": [
+              "Example guidance only. Confirm the actual programme's requirements."
+            ]
+          },
+          {
+            "id": "hku_registration_submit",
+            "category": "hku_application",
+            "title": "Submit the HKU SAO registration",
+            "action": {
+              "value": "After receiving admission, submit your HKU registration as instructed.",
+              "state": "verified",
+              "evidence": [
+                {
+                  "source_id": "S1",
+                  "quote": "Submit your registration with IAO."
+                }
+              ]
+            },
+            "channel": {
+              "value": null,
+              "state": "unknown",
+              "evidence": []
+            },
+            "deadline": {
+              "kind": "relative",
+              "date": null,
+              "raw": "Confirm the actual deadline and any offer-dependent trigger with the official provider.",
+              "timezone": null,
+              "trigger": null,
+              "state": "verified",
+              "evidence": [
+                {
+                  "source_id": "S1",
+                  "quote": "after you received an admission offer from the host institution"
+                }
+              ]
+            },
+            "documents": [],
+            "prerequisites": [
+              "offer_received"
+            ],
+            "applies_if": "You are using the SAO route and meet the applicable eligibility conditions.",
+            "notes": [
+              "Example guidance only. Confirm the actual programme's requirements."
+            ]
+          },
+          {
+            "id": "funding",
+            "category": "funding",
+            "title": "Check HKU SAO funding eligibility",
+            "action": {
+              "value": "Check whether you qualify for a scholarship or allowance.",
+              "state": "verified",
+              "evidence": [
+                {
+                  "source_id": "S2",
+                  "quote": "No separate application is necessary."
+                }
+              ]
+            },
+            "channel": {
+              "value": "Follow the official SAO guidance: https://intlaffairs.hku.hk/backend/faqs/sao-application/",
+              "state": "verified",
+              "evidence": [
+                {
+                  "source_id": "S2",
+                  "quote": "No separate application is necessary."
+                }
+              ]
+            },
+            "deadline": {
+              "kind": "none",
+              "date": null,
+              "raw": null,
+              "timezone": null,
+              "trigger": null,
+              "state": "verified",
+              "evidence": [
+                {
+                  "source_id": "S2",
+                  "quote": "No separate application is necessary."
+                }
+              ]
+            },
+            "documents": [],
+            "prerequisites": [
+              "hku_registration_submit"
+            ],
+            "applies_if": "You are using the SAO route and meet the applicable eligibility conditions.",
+            "notes": [
+              "Example guidance only. Confirm the actual programme's requirements."
+            ]
+          },
+          {
+            "id": "visa_check",
+            "category": "visa",
+            "title": "Confirm visa and entry requirements",
+            "action": {
+              "value": "Check the destination government's rules for your nationality and programme.",
+              "state": "unknown",
+              "evidence": []
+            },
+            "channel": {
+              "value": null,
+              "state": "unknown",
+              "evidence": []
+            },
+            "deadline": {
+              "kind": "unknown",
+              "date": null,
+              "raw": null,
+              "timezone": null,
+              "trigger": null,
+              "state": "unknown",
+              "evidence": []
+            },
+            "documents": [],
+            "prerequisites": [],
+            "applies_if": "You are using the SAO route and meet the applicable eligibility conditions.",
+            "notes": [
+              "Example guidance only. Confirm the actual programme's requirements."
+            ]
+          }
+        ],
+        "unresolved_questions": [
+          "Confirm the current programme's application links, deadlines, documents and personal eligibility."
+        ]
+      }
+    ],
+    "sources": [
+      {
+        "id": "S1",
+        "url": "https://intlaffairs.hku.hk/backend/faqs/sao-application/",
+        "title": "SAO – Application",
+        "publisher_type": "hku",
+        "retrieved_at": "2026-09-28T00:00:00Z",
+        "read_status": "read",
+        "note": "离线示例；打开官网核查最新内容"
+      },
+      {
+        "id": "S2",
+        "url": "https://intlaffairs.hku.hk/backend/faqs/sao-funding/",
+        "title": "SAO – Funding",
+        "publisher_type": "hku",
+        "retrieved_at": "2026-09-28T00:00:00Z",
+        "read_status": "read",
+        "note": "离线示例；打开官网核查最新内容"
+      }
+    ],
+    "warnings": [
+      "Fixed offline example; no live search was performed. Check current requirements with official sources."
+    ],
+    "discovery_clues": [],
+    "search_log": [],
+    "knowledge_matches": []
+  },
+  "plans": [
+    {
+      "plan_schema_version": "1.0",
+      "case_id": "live_1",
+      "case_label": "offline sample; no live search",
+      "programme_id": "sample_sao",
+      "programme_name": "HKU SAO short-term study workflow (example, not a specific programme)",
+      "as_of": "2026-11-04",
+      "anchors": [
+        {
+          "kind": "departure",
+          "label": "User's expected departure date",
+          "anchor_date": "2027-06-01",
+          "state": "stated",
+          "evidence": []
+        }
+      ],
+      "entries": [
+        {
+          "task_id": "hku_registration_open",
+          "order": 1,
+          "title": "Start your HKU SAO registration",
+          "title_plain": "Start your HKU SAO registration",
+          "action_plain": null,
+          "category": "hku_application",
+          "programme_id": "sample_sao",
+          "programme_name": "HKU SAO short-term study workflow (example, not a specific programme)",
+          "earliest_start": "2026-11-04",
+          "latest_start": "2027-05-22",
+          "recommended_start": "2026-11-04",
+          "deadline": null,
+          "deadline_source": "no fixed deadline stated; limited by planning horizon (departure)",
+          "deadline_source_plain": "no fixed deadline stated; limited by planning horizon (departure)",
+          "duration_days": 7,
+          "buffer_days": 3,
+          "float_days": 199,
+          "on_critical_path": false,
+          "on_driver_chain": false,
+          "state": "scheduled",
+          "state_plain": "scheduled",
+          "blocking_conflicts": [],
+          "blocking_plain": [],
+          "warnings_plain": [],
+          "warnings": [],
+          "documents": [],
+          "prerequisites": [],
+          "action": "You can start the registration when you plan to apply for a summer programme.",
+          "channel": null,
+          "applies_if": "You are using the SAO route and meet the applicable eligibility conditions.",
+          "sources": [
+            {
+              "source_id": "S1",
+              "quote": "You can open the application as soon as you plan to apply for a summer programme.",
+              "url": "https://intlaffairs.hku.hk/backend/faqs/sao-application/",
+              "retrieved_at": "2026-09-28T00:00:00+00:00"
+            }
+          ],
+          "priority": {
+            "score": 0.1843,
+            "criteria": {
+              "impact": 0.55,
+              "urgency": 0.0,
+              "flexibility": 0.0,
+              "effort": 0.3333
+            },
+            "weights": {
+              "impact": 0.2772,
+              "urgency": 0.4673,
+              "flexibility": 0.1601,
+              "effort": 0.0954
+            },
+            "rationale": [
+              "impact=0.55x0.277 + urgency=0.00x0.467 + flexibility=0.00x0.160 + effort=0.33x0.095",
+              "weighted sum=0.1843, task weight x1"
+            ]
+          }
+        },
+        {
+          "task_id": "host_application",
+          "order": 2,
+          "title": "Apply to the host institution",
+          "title_plain": "Apply to the host institution",
+          "action_plain": null,
+          "category": "host_application",
+          "programme_id": "sample_sao",
+          "programme_name": "HKU SAO short-term study workflow (example, not a specific programme)",
+          "earliest_start": "2026-11-04",
+          "latest_start": "2027-04-22",
+          "recommended_start": "2026-11-04",
+          "deadline": null,
+          "deadline_source": "deadline unknown; limited by latest start of successor offer_received",
+          "deadline_source_plain": "deadline unknown; limited by latest start of successor offer_received",
+          "duration_days": 7,
+          "buffer_days": 3,
+          "float_days": 169,
+          "on_critical_path": false,
+          "on_driver_chain": true,
+          "state": "at_risk",
+          "state_plain": "at risk",
+          "blocking_conflicts": [],
+          "blocking_plain": [],
+          "warnings_plain": [
+            "no grounded deadline: the plan places this task after its prerequisites and before the horizon, and flags it for manual confirmation"
+          ],
+          "warnings": [
+            "no grounded deadline: the plan places this task after its prerequisites and before the horizon, and flags it for manual confirmation"
+          ],
+          "documents": [],
+          "prerequisites": [],
+          "action": "Submit your programme application directly to the host institution.",
+          "channel": null,
+          "applies_if": "You are using the SAO route and meet the applicable eligibility conditions.",
+          "sources": [
+            {
+              "source_id": "S1",
+              "quote": "Apply with the host institution directly.",
+              "url": "https://intlaffairs.hku.hk/backend/faqs/sao-application/",
+              "retrieved_at": "2026-09-28T00:00:00+00:00"
+            }
+          ],
+          "priority": {
+            "score": 0.1843,
+            "criteria": {
+              "impact": 0.55,
+              "urgency": 0.0,
+              "flexibility": 0.0,
+              "effort": 0.3333
+            },
+            "weights": {
+              "impact": 0.2772,
+              "urgency": 0.4673,
+              "flexibility": 0.1601,
+              "effort": 0.0954
+            },
+            "rationale": [
+              "impact=0.55x0.277 + urgency=0.00x0.467 + flexibility=0.00x0.160 + effort=0.33x0.095",
+              "weighted sum=0.1843, task weight x1"
+            ]
+          }
+        },
+        {
+          "task_id": "offer_received",
+          "order": 3,
+          "title": "Receive the host institution's offer",
+          "title_plain": "Receive the host institution's offer",
+          "action_plain": null,
+          "category": "offer_acceptance",
+          "programme_id": "sample_sao",
+          "programme_name": "HKU SAO short-term study workflow (example, not a specific programme)",
+          "earliest_start": "2026-11-11",
+          "latest_start": "2027-05-02",
+          "recommended_start": "2026-11-11",
+          "deadline": null,
+          "deadline_source": "deadline unknown; limited by latest start of successor hku_registration_submit",
+          "deadline_source_plain": "deadline unknown; limited by latest start of successor hku_registration_submit",
+          "duration_days": 7,
+          "buffer_days": 3,
+          "float_days": 172,
+          "on_critical_path": false,
+          "on_driver_chain": true,
+          "state": "at_risk",
+          "state_plain": "at risk",
+          "blocking_conflicts": [],
+          "blocking_plain": [],
+          "warnings_plain": [
+            "no grounded deadline: the plan places this task after its prerequisites and before the horizon, and flags it for manual confirmation"
+          ],
+          "warnings": [
+            "no grounded deadline: the plan places this task after its prerequisites and before the horizon, and flags it for manual confirmation"
+          ],
+          "documents": [],
+          "prerequisites": [
+            "host_application"
+          ],
+          "action": "Wait for and obtain your admission letter.",
+          "channel": null,
+          "applies_if": "You are using the SAO route and meet the applicable eligibility conditions.",
+          "sources": [
+            {
+              "source_id": "S1",
+              "quote": "After receiving your admission",
+              "url": "https://intlaffairs.hku.hk/backend/faqs/sao-application/",
+              "retrieved_at": "2026-09-28T00:00:00+00:00"
+            }
+          ],
+          "priority": {
+            "score": 0.1843,
+            "criteria": {
+              "impact": 0.55,
+              "urgency": 0.0,
+              "flexibility": 0.0,
+              "effort": 0.3333
+            },
+            "weights": {
+              "impact": 0.2772,
+              "urgency": 0.4673,
+              "flexibility": 0.1601,
+              "effort": 0.0954
+            },
+            "rationale": [
+              "impact=0.55x0.277 + urgency=0.00x0.467 + flexibility=0.00x0.160 + effort=0.33x0.095",
+              "weighted sum=0.1843, task weight x1"
+            ]
+          }
+        },
+        {
+          "task_id": "hku_registration_submit",
+          "order": 4,
+          "title": "Submit the HKU SAO registration",
+          "title_plain": "Submit the HKU SAO registration",
+          "action_plain": null,
+          "category": "hku_application",
+          "programme_id": "sample_sao",
+          "programme_name": "HKU SAO short-term study workflow (example, not a specific programme)",
+          "earliest_start": "2026-11-18",
+          "latest_start": "2027-05-12",
+          "recommended_start": null,
+          "deadline": null,
+          "deadline_source": "relative deadline without an anchor; limited by latest start of successor funding",
+          "deadline_source_plain": "relative deadline without an anchor; limited by latest start of successor funding",
+          "duration_days": 7,
+          "buffer_days": 3,
+          "float_days": 175,
+          "on_critical_path": false,
+          "on_driver_chain": true,
+          "state": "infeasible",
+          "state_plain": "infeasible",
+          "blocking_conflicts": [
+            "relative deadline 'Confirm the actual deadline and any offer-dependent trigger with the official provider.' has no anchor and offset, so it cannot be resolved to a date; confirm the trigger and its lead time with the official page"
+          ],
+          "blocking_plain": [
+            "relative deadline 'Confirm the actual deadline and any offer-dependent trigger with the official provider.' has no anchor and offset, so it cannot be resolved to a date; confirm the trigger and its lead time with the official page"
+          ],
+          "warnings_plain": [],
+          "warnings": [],
+          "documents": [],
+          "prerequisites": [
+            "offer_received"
+          ],
+          "action": "After receiving admission, submit your HKU registration as instructed.",
+          "channel": null,
+          "applies_if": "You are using the SAO route and meet the applicable eligibility conditions.",
+          "sources": [
+            {
+              "source_id": "S1",
+              "quote": "Submit your registration with IAO.",
+              "url": "https://intlaffairs.hku.hk/backend/faqs/sao-application/",
+              "retrieved_at": "2026-09-28T00:00:00+00:00"
+            },
+            {
+              "source_id": "S1",
+              "quote": "after you received an admission offer from the host institution",
+              "url": "https://intlaffairs.hku.hk/backend/faqs/sao-application/",
+              "retrieved_at": "2026-09-28T00:00:00+00:00"
+            }
+          ],
+          "priority": {
+            "score": 0.1843,
+            "criteria": {
+              "impact": 0.55,
+              "urgency": 0.0,
+              "flexibility": 0.0,
+              "effort": 0.3333
+            },
+            "weights": {
+              "impact": 0.2772,
+              "urgency": 0.4673,
+              "flexibility": 0.1601,
+              "effort": 0.0954
+            },
+            "rationale": [
+              "impact=0.55x0.277 + urgency=0.00x0.467 + flexibility=0.00x0.160 + effort=0.33x0.095",
+              "weighted sum=0.1843, task weight x1"
+            ]
+          }
+        },
+        {
+          "task_id": "funding",
+          "order": 5,
+          "title": "Check HKU SAO funding eligibility",
+          "title_plain": "Check HKU SAO funding eligibility",
+          "action_plain": null,
+          "category": "funding",
+          "programme_id": "sample_sao",
+          "programme_name": "HKU SAO short-term study workflow (example, not a specific programme)",
+          "earliest_start": "2026-11-25",
+          "latest_start": "2027-05-22",
+          "recommended_start": "2026-11-25",
+          "deadline": null,
+          "deadline_source": "no fixed deadline stated; limited by planning horizon (departure)",
+          "deadline_source_plain": "no fixed deadline stated; limited by planning horizon (departure)",
+          "duration_days": 7,
+          "buffer_days": 3,
+          "float_days": 178,
+          "on_critical_path": false,
+          "on_driver_chain": true,
+          "state": "scheduled",
+          "state_plain": "scheduled",
+          "blocking_conflicts": [],
+          "blocking_plain": [],
+          "warnings_plain": [],
+          "warnings": [],
+          "documents": [],
+          "prerequisites": [
+            "hku_registration_submit"
+          ],
+          "action": "Check whether you qualify for a scholarship or allowance.",
+          "channel": "Follow the official SAO guidance: https://intlaffairs.hku.hk/backend/faqs/sao-application/",
+          "applies_if": "You are using the SAO route and meet the applicable eligibility conditions.",
+          "sources": [
+            {
+              "source_id": "S2",
+              "quote": "No separate application is necessary.",
+              "url": "https://intlaffairs.hku.hk/backend/faqs/sao-funding/",
+              "retrieved_at": "2026-09-28T00:00:00+00:00"
+            }
+          ],
+          "priority": {
+            "score": 0.1843,
+            "criteria": {
+              "impact": 0.55,
+              "urgency": 0.0,
+              "flexibility": 0.0,
+              "effort": 0.3333
+            },
+            "weights": {
+              "impact": 0.2772,
+              "urgency": 0.4673,
+              "flexibility": 0.1601,
+              "effort": 0.0954
+            },
+            "rationale": [
+              "impact=0.55x0.277 + urgency=0.00x0.467 + flexibility=0.00x0.160 + effort=0.33x0.095",
+              "weighted sum=0.1843, task weight x1"
+            ]
+          }
+        },
+        {
+          "task_id": "visa_check",
+          "order": 6,
+          "title": "Confirm visa and entry requirements",
+          "title_plain": "Confirm visa and entry requirements",
+          "action_plain": null,
+          "category": "visa",
+          "programme_id": "sample_sao",
+          "programme_name": "HKU SAO short-term study workflow (example, not a specific programme)",
+          "earliest_start": "2026-11-04",
+          "latest_start": "2027-05-22",
+          "recommended_start": "2026-11-04",
+          "deadline": null,
+          "deadline_source": "deadline unknown; limited by planning horizon (departure)",
+          "deadline_source_plain": "deadline unknown; limited by planning horizon (departure)",
+          "duration_days": 7,
+          "buffer_days": 3,
+          "float_days": 199,
+          "on_critical_path": false,
+          "on_driver_chain": false,
+          "state": "at_risk",
+          "state_plain": "at risk",
+          "blocking_conflicts": [],
+          "blocking_plain": [],
+          "warnings_plain": [
+            "no grounded deadline: the plan places this task after its prerequisites and before the horizon, and flags it for manual confirmation"
+          ],
+          "warnings": [
+            "no grounded deadline: the plan places this task after its prerequisites and before the horizon, and flags it for manual confirmation"
+          ],
+          "documents": [],
+          "prerequisites": [],
+          "action": "Check the destination government's rules for your nationality and programme.",
+          "channel": null,
+          "applies_if": "You are using the SAO route and meet the applicable eligibility conditions.",
+          "sources": [],
+          "priority": {
+            "score": 0.1843,
+            "criteria": {
+              "impact": 0.55,
+              "urgency": 0.0,
+              "flexibility": 0.0,
+              "effort": 0.3333
+            },
+            "weights": {
+              "impact": 0.2772,
+              "urgency": 0.4673,
+              "flexibility": 0.1601,
+              "effort": 0.0954
+            },
+            "rationale": [
+              "impact=0.55x0.277 + urgency=0.00x0.467 + flexibility=0.00x0.160 + effort=0.33x0.095",
+              "weighted sum=0.1843, task weight x1"
+            ]
+          }
+        }
+      ],
+      "weeks": [
+        {
+          "week_start": "2027-04-26",
+          "week_end": "2027-05-02",
+          "items": [
+            "hku_registration_open",
+            "funding",
+            "visa_check"
+          ],
+          "effort_days": 21
+        }
+      ],
+      "edges": [
+        {
+          "predecessor": "host_application",
+          "successor": "offer_received",
+          "kind": "prerequisite",
+          "reason": "host_application must finish before offer_received"
+        },
+        {
+          "predecessor": "offer_received",
+          "successor": "hku_registration_submit",
+          "kind": "prerequisite",
+          "reason": "offer_received must finish before hku_registration_submit"
+        },
+        {
+          "predecessor": "hku_registration_submit",
+          "successor": "funding",
+          "kind": "prerequisite",
+          "reason": "hku_registration_submit must finish before funding"
+        }
+      ],
+      "critical_path": [
+        "host_application",
+        "offer_received",
+        "hku_registration_submit",
+        "funding"
+      ],
+      "critical_path_basis": "longest_dependency_chain",
+      "conflicts": [
+        {
+          "kind": "relative_deadline_unresolved",
+          "task_id": "hku_registration_submit",
+          "other_task_id": null,
+          "detail": "relative deadline 'Confirm the actual deadline and any offer-dependent trigger with the official provider.' has no anchor and offset, so it cannot be resolved to a date; confirm the trigger and its lead time with the official page",
+          "detail_plain": "relative deadline 'Confirm the actual deadline and any offer-dependent trigger with the official provider.' has no anchor and offset, so it cannot be resolved to a date; confirm the trigger and its lead time with the official page",
+          "blocking": true,
+          "evidence": [
+            {
+              "source_id": "S1",
+              "quote": "Submit your registration with IAO.",
+              "url": "https://intlaffairs.hku.hk/backend/faqs/sao-application/",
+              "retrieved_at": "2026-09-28T00:00:00+00:00"
+            }
+          ]
+        },
+        {
+          "kind": "unknown_deadline",
+          "task_id": "host_application",
+          "other_task_id": null,
+          "detail": "no grounded deadline: the plan places this task after its prerequisites and before the horizon, and flags it for manual confirmation",
+          "detail_plain": "no grounded deadline: the plan places this task after its prerequisites and before the horizon, and flags it for manual confirmation",
+          "blocking": false,
+          "evidence": [
+            {
+              "source_id": "S1",
+              "quote": "Apply with the host institution directly.",
+              "url": "https://intlaffairs.hku.hk/backend/faqs/sao-application/",
+              "retrieved_at": "2026-09-28T00:00:00+00:00"
+            }
+          ]
+        },
+        {
+          "kind": "unknown_deadline",
+          "task_id": "offer_received",
+          "other_task_id": null,
+          "detail": "no grounded deadline: the plan places this task after its prerequisites and before the horizon, and flags it for manual confirmation",
+          "detail_plain": "no grounded deadline: the plan places this task after its prerequisites and before the horizon, and flags it for manual confirmation",
+          "blocking": false,
+          "evidence": [
+            {
+              "source_id": "S1",
+              "quote": "After receiving your admission",
+              "url": "https://intlaffairs.hku.hk/backend/faqs/sao-application/",
+              "retrieved_at": "2026-09-28T00:00:00+00:00"
+            }
+          ]
+        },
+        {
+          "kind": "unknown_deadline",
+          "task_id": "visa_check",
+          "other_task_id": null,
+          "detail": "no grounded deadline: the plan places this task after its prerequisites and before the horizon, and flags it for manual confirmation",
+          "detail_plain": "no grounded deadline: the plan places this task after its prerequisites and before the horizon, and flags it for manual confirmation",
+          "blocking": false,
+          "evidence": []
+        }
+      ],
+      "ahp": {
+        "criteria": [
+          "impact",
+          "urgency",
+          "flexibility",
+          "effort"
+        ],
+        "weights": {
+          "impact": 0.2772,
+          "urgency": 0.4673,
+          "flexibility": 0.1601,
+          "effort": 0.0954
+        },
+        "lambda_max": 4.031,
+        "consistency_index": 0.0103,
+        "consistency_ratio": 0.0115,
+        "accepted": true,
+        "rationale": [
+          "AHP over 4 criteria with 6 pairwise judgements",
+          "lambda_max=4.0310, CI=0.0103, CR=0.0115",
+          "CR < 0.10 accepted"
+        ]
+      },
+      "feasibility": "infeasible",
+      "unscheduled": [],
+      "stats": {
+        "tasks": 6,
+        "entries_with_source_quote": 5,
+        "source_grounding_rate": 0.8333,
+        "tasks_with_stated_deadline": 0,
+        "critical_path_length": 4,
+        "blocking_conflicts": 1,
+        "review_items": 3,
+        "ahp_consistency_ratio": 0.0115,
+        "ahp_accepted": true,
+        "as_of": "2026-11-04"
+      },
+      "notes": [
+        "profile: anonymous profile",
+        "planning horizon: 2027-06-01",
+        "critical path basis: longest_dependency_chain"
+      ],
+      "notes_plain": [
+        "Start dates respect prerequisite order. Durations and buffers are user estimates, not official processing times."
+      ]
+    }
+  ],
+  "markdown": "# HKU SAO short-term study workflow (example, not a specific programme)\n\n\n\nPlanning date: 2026-11-04\n\nStatus: infeasible\n\n\n\nDurations and buffers are user estimates. Dates require official confirmation where marked unknown.\n\n\n\n## 1. Start your HKU SAO registration\n\n\n\nYou can start the registration when you plan to apply for a summer programme.\n\nSuggested start: 2026-11-04\n\nLatest start (calculated): 2027-05-22\n\nOfficial deadline: To confirm\n\nPrerequisites: None stated\n\nDocuments: To confirm\n\n\n\n\n\n> You can open the application as soon as you plan to apply for a summer programme.\n\nSource: https://intlaffairs.hku.hk/backend/faqs/sao-application/\n\n\n\n## 2. Apply to the host institution\n\n\n\nSubmit your programme application directly to the host institution.\n\nSuggested start: 2026-11-04\n\nLatest start (calculated): 2027-04-22\n\nOfficial deadline: To confirm\n\nPrerequisites: None stated\n\nDocuments: To confirm\n\n\n\n\n\n> Apply with the host institution directly.\n\nSource: https://intlaffairs.hku.hk/backend/faqs/sao-application/\n\n\n\n## 3. Receive the host institution's offer\n\n\n\nWait for and obtain your admission letter.\n\nSuggested start: 2026-11-11\n\nLatest start (calculated): 2027-05-02\n\nOfficial deadline: To confirm\n\nPrerequisites: host_application\n\nDocuments: To confirm\n\n\n\n\n\n> After receiving your admission\n\nSource: https://intlaffairs.hku.hk/backend/faqs/sao-application/\n\n\n\n## 4. Submit the HKU SAO registration\n\n\n\nAfter receiving admission, submit your HKU registration as instructed.\n\nSuggested start: To confirm\n\nLatest start (calculated): 2027-05-12\n\nOfficial deadline: To confirm\n\nPrerequisites: offer_received\n\nDocuments: To confirm\n\n\n\n\n\n> Submit your registration with IAO.\n\nSource: https://intlaffairs.hku.hk/backend/faqs/sao-application/\n\n\n\n> after you received an admission offer from the host institution\n\nSource: https://intlaffairs.hku.hk/backend/faqs/sao-application/\n\n\n\n## 5. Check HKU SAO funding eligibility\n\n\n\nCheck whether you qualify for a scholarship or allowance.\n\nSuggested start: 2026-11-25\n\nLatest start (calculated): 2027-05-22\n\nOfficial deadline: To confirm\n\nPrerequisites: hku_registration_submit\n\nDocuments: To confirm\n\nFollow the official SAO guidance: https://intlaffairs.hku.hk/backend/faqs/sao-application/\n\n\n\n> No separate application is necessary.\n\nSource: https://intlaffairs.hku.hk/backend/faqs/sao-funding/\n\n\n\n## 6. Confirm visa and entry requirements\n\n\n\nCheck the destination government's rules for your nationality and programme.\n\nSuggested start: 2026-11-04\n\nLatest start (calculated): 2027-05-22\n\nOfficial deadline: To confirm\n\nPrerequisites: None stated\n\nDocuments: To confirm\n\n\n\n\n\n## Checks to resolve\n\n\n\n- relative deadline 'Confirm the actual deadline and any offer-dependent trigger with the official provider.' has no anchor and offset, so it cannot be resolved to a date; confirm the trigger and its lead time with the official page\n\n- no grounded deadline: the plan places this task after its prerequisites and before the horizon, and flags it for manual confirmation\n\n- no grounded deadline: the plan places this task after its prerequisites and before the horizon, and flags it for manual confirmation\n\n- no grounded deadline: the plan places this task after its prerequisites and before the horizon, and flags it for manual confirmation",
+  "assumptions": {
+    "departure_date": "2027-06-01",
+    "duration_days": 7,
+    "buffer_days": 3,
+    "note": "Durations are user estimates. Start and latest-start dates are calculated, not official deadlines."
+  }
+}
