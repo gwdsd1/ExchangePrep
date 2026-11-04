@@ -74,7 +74,7 @@ class WorkflowBrowserTests(unittest.TestCase):
                     page.screenshot(path=str(ROOT/'tmp/workflow-mobile.png'),full_page=True)
                     page.locator('#language-button').click()
                     self.assertEqual(page.locator('html').get_attribute('lang'), 'en')
-                    self.assertIn('Your next chapter', page.locator('h1').inner_text())
+                    self.assertIn('Study abroad application planning', page.locator('h1').inner_text())
                     self.assertEqual(page.locator('[name=destination]').input_value(), 'United Kingdom')
                     page.locator('#sample').click()
                     page.get_by_role('heading', name='Offline workflow example', exact=True).wait_for()
