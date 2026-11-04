@@ -8,6 +8,10 @@ GitHub Pages 静态入口：<https://gwdsd1.github.io/ExchangePrep/>
 
 GitHub Pages 只提供 HTML、CSS、JavaScript；Python、Playwright 搜索和时间线计算运行在 Render Web Service。网页通过 HTTPS 调用云后端，不需要访问者在本地启动 Python。每位访问者填写自己的 DeepSeek／OpenAI API Key。
 
+Render 独立子域名入口：<https://exchangeprep-gwdsd1.onrender.com/workspace>
+
+项目路径 `/ExchangePrep/` 不覆盖 `https://gwdsd1.github.io/` 主页。
+
 ## Render 配置
 
 仓库包含 Dockerfile，安装 Python 依赖与 Chromium。选择公开仓库部署，runtime 使用 Docker，实例明确选择 **Free**，不添加信用卡、不升级付费实例。服务监听 `$PORT`，健康检查路径 `/health`，只运行一个 Uvicorn worker。
@@ -21,7 +25,7 @@ GitHub Pages 只提供 HTML、CSS、JavaScript；Python、Playwright 搜索和�
 在完整项目环境运行：
 
 ```powershell
-.\.venv\Scripts\python.exe build_pages.py --backend-url https://YOUR-SERVICE.onrender.com
+.\.venv\Scripts\python.exe build_pages.py --backend-url https://exchangeprep-gwdsd1.onrender.com
 ```
 
 将 `docs/` 提交到 `main`，GitHub Pages 发布来源设置为 `main /docs`。`docs/static/config.js` 仅包含公开后端 URL，不包含任何 API Key。没有后端地址时，只允许体验静态离线示例，页面会明确提示实时服务未就绪，不会假装完成搜索。

@@ -4,7 +4,7 @@
 
 本仓库已整合联网调查、依赖建模和时间线生成。信息收集／提取由 Wang Zhengwei 完成，时间线模块来自 Gao Huaze 的 [Kura-cybc/COMP1110](https://github.com/Kura-cybc/COMP1110)。
 
-公开项目页：[gwdsd1.github.io/ExchangePrep](https://gwdsd1.github.io/ExchangePrep/)。前端使用 GitHub Pages，Python 与 Chromium 搜索后端使用 Render。访问者输入个人 Key 即可查询；冷启动或服务忙时请稍后重试。发布状态与限制见 [DEPLOYMENT.md](DEPLOYMENT.md)。
+公开项目页：[gwdsd1.github.io/ExchangePrep](https://gwdsd1.github.io/ExchangePrep/)，不覆盖 GitHub 主页。独立子域名：[exchangeprep-gwdsd1.onrender.com/workspace](https://exchangeprep-gwdsd1.onrender.com/workspace)。前端使用 GitHub Pages，Python 与 Chromium 搜索后端使用 Render。访问者输入个人 Key 即可查询；冷启动或服务忙时请稍后重试。发布状态与限制见 [DEPLOYMENT.md](DEPLOYMENT.md)。
 
 新版前端按课程 UI 原则强化了品牌和视觉层级；顶部支持中文／英文切换，模型回答采用所选语言。长访问警告和日期核查提示默认折叠，原始证据保留。设计对应关系见 [UI_DESIGN.md](UI_DESIGN.md)。
 
