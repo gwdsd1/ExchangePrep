@@ -20,16 +20,18 @@ $env:EXCHANGEPREP_LLM_PROVIDER = 'openai'
 $env:OPENAI_API_KEY = '你的 API Key'
 ```
 
-### 方式 B：仅使用 DeepSeek Key，调用本机浏览器搜索
+### 方式 B：DeepSeek 官方 Search／Fetch（默认）
 
 ```powershell
 $env:EXCHANGEPREP_LLM_PROVIDER = 'deepseek'
 $env:DEEPSEEK_API_KEY = '你的 DeepSeek API Key'
 ```
 
-DeepSeek 通过 Tool Calls 请求搜索词，本地程序使用 Edge/Chrome 打开公开搜索结果，再把实际网址返回给模型。无需第二个搜索 API Key，但电脑上需要 Edge 或 Chrome；没有这两种浏览器时可执行 `.\.venv\Scripts\python.exe -m playwright install chromium`。程序也会读取 HKU 的往届认可短期项目目录作为候选补充。**这不是 DeepSeek API 自带的联网搜索**；搜索引擎若出现验证码、封锁或结果不相关，覆盖率会下降，页面会显示警告。填入具体项目官网可提高稳定性。
+DeepSeek 通过工具调用规划查询，程序调用官方 Search API 获取网址，再用 Fetch API 读取 Markdown 正文。只有读到的正文进入证据校验，搜索摘要不会自证为官方事实。官方读取不可用时补充直接公开 HTML，PDF 沿用原解析器；认证／余额错误停止，安全拒绝不绕过。
 
-如有 Brave Search API Key，可另设 `$env:BRAVE_API_KEY = '你的 Brave Search API Key'`，自动模式会优先使用它；也可把 `EXCHANGEPREP_SEARCH_PROVIDER` 设为 `browser`，强制使用 DeepSeek + 本机浏览器。
+默认 DeepSeek 模式不启动 Chromium。若需保留旧浏览器搜索，可显式设 `EXCHANGEPREP_SEARCH_PROVIDER=browser`；该模式需要本机 Edge／Chrome，或安装 Playwright Chromium。Brave 模式仍可显式设 `EXCHANGEPREP_SEARCH_PROVIDER=brave` 并配置 `BRAVE_API_KEY`。OpenAI 模型与内置搜索保持支持。
+
+官方 Search／Fetch 分别按成功请求计费，模型费用另计。调用上限、错误处理及部署说明见 [README](README.md) 和 [DEPLOYMENT.md](DEPLOYMENT.md)。
 
 启动服务：
 
@@ -44,7 +46,7 @@ DeepSeek 通过 Tool Calls 请求搜索词，本地程序使用 Edge/Chrome 打�
 | 变量 | 默认值 | 用途 |
 |---|---|---|
 | `EXCHANGEPREP_LLM_PROVIDER` | `openai` | `openai` 或 `deepseek` |
-| `EXCHANGEPREP_SEARCH_PROVIDER` | `auto` | `openai`、`brave`、`browser` 或 `manual`；`auto` 优先 Brave，其次 OpenAI；仅有 DeepSeek Key 时使用本机浏览器 |
+| `EXCHANGEPREP_SEARCH_PROVIDER` | `auto` | `deepseek`、`openai`、`brave`、`browser` 或 `manual`；`auto` 为 DeepSeek 选择官方接口，其他模型优先 Brave，其次 OpenAI |
 | `OPENAI_MODEL` | `gpt-5-mini` | OpenAI 模型名 |
 | `DEEPSEEK_MODEL` | `deepseek-flash` | DeepSeek 模型名 |
 
@@ -71,7 +73,7 @@ DeepSeek 结构化提取会检查是否因输出长度而截断；JSON／Schema 
 
 ## 搜索策略与社媒线索
 
-DeepSeek + 浏览器模式会先执行两组小红书检索，查询“HKU/港大学生 + 目的地 + 暑校/寒校/交换 + 申请经验”，不强制限定未来年份，以便找到往届学生的项目名与办理经验。之后模型可追加社媒检索，按具体院校查询当前年度申请页、资格、材料、日期和费用，并读取已发现网页的详情链接。检索聚焦 HKU 学生出境，避免误搜为其他学生来港大参加夏校。
+DeepSeek 会先执行两组小红书检索，并在官方 API 模式补充三组官网基线查询，查询“HKU/港大学生 + 目的地 + 暑校/寒校/交换 + 申请经验”，不强制限定未来年份，以便找到往届学生的项目名与办理经验。之后模型可追加社媒检索，按具体院校查询当前年度申请页、资格、材料、日期和费用，并读取已发现网页的详情链接。检索聚焦 HKU 学生出境，避免误搜为其他学生来港大参加夏校。
 
 HKU 往届认可目录作为候选线索供模型选择，不再用目录前几行直接覆盖模型找到的项目。各院校分别读取申请详情；初次提取后，对所有选中项目的缺失字段进行院校定向补搜。
 
@@ -91,7 +93,7 @@ HKU 往届认可目录作为候选线索供模型选择，不再用目录前几�
 4. 对未公布、已过期或互相冲突的信息保留不确定状态；不能保证覆盖所有步骤。
 5. 签证规则需结合国籍、居住地及项目性质，最终以目的地政府页面为准。
 6. 每次调用实时搜索和大模型 API 可能产生费用，具体按所用服务的账户计费。
-7. HKU 目录补充目前只覆盖暑校/寒校候选；交换项目及各国签证官网仍依赖浏览器搜索或另配 Brave/OpenAI 搜索，不能保证穷尽。
+7. HKU 目录补充目前只覆盖暑校/寒校候选；交换项目及各国签证官网通过所选搜索后端（默认官方 DeepSeek，或显式 Brave/OpenAI/浏览器）发现，不能保证穷尽。
 
 ## 运行检查
 

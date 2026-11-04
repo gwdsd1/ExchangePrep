@@ -19,6 +19,7 @@ from bs4 import BeautifulSoup
 from openai import OpenAI
 
 from browser_search import browser_search_query
+from deepseek_web import DeepSeekWeb, DeepSeekWebError, search_query
 from knowledge_base import knowledge_urls, markdown_links, request_knowledge, terms_for
 from models import (
     Deadline,
@@ -248,6 +249,45 @@ def read_page(client: httpx.Client, url: str, source_id: str) -> Page:
     return Page(source=source, text=normalize(text), links=links)
 
 
+def read_deepseek_page(client: httpx.Client, web: DeepSeekWeb, url: str, source_id: str) -> Page:
+    """Fetch public HTML through DeepSeek; retain direct HTML/PDF as a supplement."""
+    current = safe_public_url(urldefrag(url)[0])
+    if is_login_url(current):
+        raise LoginRequiredError("需要登录；仅提供入口网址，不读取登录后内容")
+    if urlparse(current).path.lower().endswith(".pdf"):
+        page = read_page(client, current, source_id)
+        page.source.note = "Supplementary direct PDF reader; original public PDF text"
+        return page
+    fallback_reason = None
+    try:
+        data = web.fetch(current)
+        content = data["content"]
+        if re.search(r'<input\b[^>]*type\s*=\s*[\"\x27]?password', content, re.I) or (
+                re.match(r"^(?:log.?in|sign.?in|登录|登入)(?:\W|$)", data["title"], re.I)
+                and re.search(r"password|authenticate|sign.?in|登录|登入", content, re.I)):
+            raise LoginRequiredError("网页为登录表单；仅提供入口网址")
+        if len(normalize(content)) < 120:
+            fallback_reason = "DeepSeek Fetch content too short"
+        else:
+            # Resolve relative Markdown links; search summaries never enter Page.text.
+            content = re.sub(r'(\]\()((?:/|\./|\.\./)[^\s)]+)(\))',
+                lambda match: match[1] + urljoin(current, match[2]) + match[3], content)
+            return Page(source=Source(id=source_id, url=current, title=data["title"],
+                publisher_type=publisher_type(current), retrieved_at=datetime.now(timezone.utc),
+                read_status="read", note="Read via DeepSeek Fetch API; evidence checked against returned Markdown, not search summaries"),
+                text=normalize(content), links=markdown_links(content))
+    except DeepSeekWebError as exc:
+        # Authentication/balance failures and provider security rejection are not
+        # disguised as a successful fallback or retried through another reader.
+        if exc.fatal or exc.status_code == 403:
+            raise
+        fallback_reason = str(exc)
+    page = read_page(client, current, source_id)
+    page.source.note = (f"Supplementary direct HTML/PDF reader after {fallback_reason}. "
+                        + (page.source.note or ""))[:400]
+    return page
+
+
 def page_excerpt(page: Page, limit: int = 10000) -> str:
     text = page.text
     if len(text) <= limit:
@@ -323,6 +363,21 @@ def run_browser_search(query: str, purpose: str, search_log: list[SearchAttempt]
     return hits
 
 
+def run_deepseek_search(web: DeepSeekWeb, query: str, purpose: str,
+                        search_log: list[SearchAttempt], *, original_question: str = "") -> list[dict]:
+    query = search_query(query)
+    try:
+        hits = web.search(query, original_question=original_question)
+    except DeepSeekWebError as exc:
+        search_log.append(SearchAttempt(query=query, purpose=purpose, status="error", note=str(exc)))
+        if exc.fatal:
+            raise
+        return []
+    search_log.append(SearchAttempt(query=query, purpose=purpose,
+        status="results" if hits else "empty", result_count=len(hits), note="DeepSeek official Search API"))
+    return hits
+
+
 def brave_search(client: httpx.Client, request: ResearchRequest, key: str) -> list[str]:
     urls: list[str] = []
     for query in social_search_queries(request) + search_queries(request):
@@ -387,8 +442,9 @@ def deepseek_browser_search(request: ResearchRequest, key: str, model: str, *,
                             search_log: list[SearchAttempt] | None = None,
                             page_cache: dict[str, Page] | None = None,
                             knowledge_context: list[dict] | None = None,
-                            login_sources: list[Source] | None = None) -> list[str]:
-    """Discover names from social posts, then investigate specific host programmes."""
+                            login_sources: list[Source] | None = None,
+                            web_client: DeepSeekWeb | None = None) -> list[str]:
+    """Shared bounded agent; official APIs when supplied, legacy browser otherwise."""
     seed_urls = seed_urls or []
     clues = clues if clues is not None else []
     search_log = search_log if search_log is not None else []
@@ -411,8 +467,19 @@ def deepseek_browser_search(request: ResearchRequest, key: str, model: str, *,
         "parameters": {"type": "object", "properties": {"url": {"type": "string"}}, "required": ["url"]},
     }}
     social_hits: list[dict[str, str]] = []
+    def search(query, purpose):
+        if web_client is not None:
+            return run_deepseek_search(web_client, query, purpose, search_log,
+                original_question=f"HKU {request.programme_type} {request.destination} {request.start_date.year} {request.major}")
+        return run_browser_search(query, purpose, search_log)
     for query in social_search_queries(request):
-        social_hits.extend(run_browser_search(query, "social_discovery", search_log))
+        social_hits.extend(search(query, "social_discovery"))
+    official_hits = []
+    if web_client is not None:
+        # A focused official baseline is independent of whether social content
+        # is indexed or the model spends its tool budget reading anecdotes.
+        for query in search_queries(request)[:3]:
+            official_hits.extend(search(query, "official_discovery"))
 
     def remember_clues(hits: list[dict[str, str]], query: str) -> None:
         existing = {clue.url for clue in clues}
@@ -424,7 +491,7 @@ def deepseek_browser_search(request: ResearchRequest, key: str, model: str, *,
                 existing.add(hit["url"])
     for hit in social_hits:
         remember_clues([hit], hit.get("query", "小红书项目发现"))
-    urls = list(dict.fromkeys(hit["url"] for hit in social_hits))
+    urls = list(dict.fromkeys(hit["url"] for hit in social_hits + official_hits))
     known_urls = set(seed_urls + urls)
     for snippet in knowledge_context or []:
         known_urls.update(snippet.get("links", {}).values())
@@ -454,6 +521,7 @@ def deepseek_browser_search(request: ResearchRequest, key: str, model: str, *,
         )},
         {"role": "user", "content": json.dumps({"request": request.model_dump(mode="json"),
             "directory_candidates": seed_urls, "xiaohongshu_search_results": social_hits,
+            "official_search_results": official_hits,
             "knowledge_base_matches": knowledge_context or [],
             "search_failures": [attempt.model_dump() for attempt in search_log if attempt.status != "results"]},
             ensure_ascii=False)},
@@ -485,7 +553,7 @@ def deepseek_browser_search(request: ResearchRequest, key: str, model: str, *,
                     if call.function.name == "search_web":
                         query = str(arguments.get("query", ""))[:240]
                         purpose = "social_discovery" if re.search(r"xiaohongshu|小红书|zhihu|dcard|reddit", query, re.I) else "official_discovery"
-                        hits = run_browser_search(query, purpose, search_log)
+                        hits = search(query, purpose)
                         remember_clues(hits, query)
                         urls.extend(hit["url"] for hit in hits)
                         known_urls.update(hit["url"] for hit in hits)
@@ -494,7 +562,8 @@ def deepseek_browser_search(request: ResearchRequest, key: str, model: str, *,
                         url = str(arguments.get("url", ""))
                         if url not in known_urls:
                             raise ValueError("URL must come from a search result or an already read page link.")
-                        page = page_cache.get(url) or read_page(client, url, f"D{calls}")
+                        page = page_cache.get(url) or (read_deepseek_page(client, web_client, url, f"D{calls}")
+                            if web_client is not None else read_page(client, url, f"D{calls}"))
                         page_cache[url] = page
                         page_cache[page.source.url] = page
                         known_urls.add(page.source.url)
@@ -503,6 +572,10 @@ def deepseek_browser_search(request: ResearchRequest, key: str, model: str, *,
                         tool_output = page_excerpt(page)
                     else:
                         raise ValueError("Unknown tool")
+                except DeepSeekWebError as exc:
+                    if exc.fatal:
+                        raise
+                    tool_output = json.dumps({"error": str(exc)})
                 except (httpx.HTTPError, ValueError, RuntimeError, OSError) as exc:
                     error = {"error": str(exc)[:300]}
                     if isinstance(exc, LoginRequiredError) and call.function.name == "read_web":
@@ -1121,15 +1194,17 @@ def research(request: ResearchRequest, *, provider: str | None = None,
     search_backend = (search_backend or os.getenv("EXCHANGEPREP_SEARCH_PROVIDER", os.getenv("PATHLOOM_SEARCH_PROVIDER", "auto"))).lower()
     if search_backend == "auto":
         search_backend = (
+            "deepseek" if provider == "deepseek" else
             "brave" if brave_key else
             "openai" if openai_key else
-            "browser" if provider == "deepseek" else
             "manual" if request.programme_url else "none"
         )
     if search_backend == "none":
         raise ValueError("实时发现项目需要 OPENAI_API_KEY 或 BRAVE_API_KEY；也可提供具体项目官网链接进行定向调查")
-    if search_backend not in {"brave", "openai", "browser", "manual"}:
-        raise ValueError("搜索方式只能是 brave、openai、browser 或 manual")
+    if search_backend not in {"deepseek", "brave", "openai", "browser", "manual"}:
+        raise ValueError("搜索方式只能是 deepseek、brave、openai、browser 或 manual")
+    if search_backend == "deepseek" and provider != "deepseek":
+        raise ValueError("DeepSeek Search/Fetch 需要选择 DeepSeek 提供商")
     if search_backend == "openai" and not openai_key:
         raise ValueError("OpenAI 网页搜索需要 OPENAI_API_KEY；DeepSeek 模式可改用 BRAVE_API_KEY")
     if search_backend == "brave" and not brave_key:
@@ -1151,13 +1226,14 @@ def research(request: ResearchRequest, *, provider: str | None = None,
         warnings.append("本地知识库不可读，已继续联网检索；请检查 Markdown 文件。")
     kb_urls = knowledge_urls(knowledge_matches)
     with httpx.Client(timeout=20, headers={"User-Agent": "ExchangePrepResearchDemo/0.2 (academic project)"}) as client:
+        web_client = DeepSeekWeb(client, key) if search_backend == "deepseek" else None
         if search_backend == "brave":
             discovered = brave_search(client, request, brave_key)
         elif search_backend == "openai":
             discovered = openai_search(request, openai_key, (model if provider == "openai" else os.getenv("OPENAI_MODEL", "gpt-5-mini")))
-        elif search_backend == "browser":
+        elif search_backend in {"browser", "deepseek"}:
             try:
-                catalog_urls = hku_catalog_search(client, request)
+                catalog_urls = hku_catalog_search(client, request) if search_backend == "browser" else []
                 if catalog_urls:
                     warnings.append("同时查询了 HKU 往届认可项目目录；该目录仅作候选线索，不代表当前年度仍开放。")
             except (httpx.HTTPError, ValueError) as exc:
@@ -1166,7 +1242,7 @@ def research(request: ResearchRequest, *, provider: str | None = None,
                 discovered = deepseek_browser_search(request, key, model, seed_urls=catalog_urls,
                     clues=clues, search_log=search_log, page_cache=page_cache,
                     knowledge_context=[item.model_dump() for item in knowledge_matches],
-                    login_sources=agent_login_sources)
+                    login_sources=agent_login_sources, web_client=web_client)
             except ValueError as exc:
                 discovered = []
                 warnings.append(str(exc))
@@ -1176,7 +1252,7 @@ def research(request: ResearchRequest, *, provider: str | None = None,
             if xhs_attempts and not any("xiaohongshu.com" in clue.platform for clue in clues):
                 warnings.append("已检索小红书，但未获得可用笔记线索；空结果和访问错误已记录，不能据此判断没有相关经验。")
             if not discovered and not request.programme_url:
-                raise ValueError("浏览器搜索与 HKU 项目目录均未发现可用项目；请检查搜索结果或提供项目官网")
+                raise ValueError("搜索未发现可用项目；请查看搜索记录或提供具体项目官网")
         else:
             discovered = []
         trusted_hosts = {urlparse(url).hostname for url in catalog_urls if publisher_type(url) not in {"hku", "social", "government"}}
@@ -1193,7 +1269,8 @@ def research(request: ResearchRequest, *, provider: str | None = None,
             try:
                 cached = page_cache.get(url)
                 page = Page(source=cached.source.model_copy(update={"id": source_id}), text=cached.text,
-                            links=cached.links) if cached else read_page(client, url, source_id)
+                            links=cached.links) if cached else (read_deepseek_page(client, web_client, url, source_id)
+                                if web_client is not None else read_page(client, url, source_id))
                 if any(existing.source.url == page.source.url for existing in pages):
                     return False
                 if page.source.publisher_type == "other" and urlparse(page.source.url).hostname in trusted_hosts:
@@ -1202,6 +1279,14 @@ def research(request: ResearchRequest, *, provider: str | None = None,
                 pages.append(page)
                 attempted.add(page.source.url)
                 return True
+            except DeepSeekWebError as exc:
+                if exc.fatal:
+                    raise
+                warnings.append(f"无法读取 {url}: {exc}")
+                failed_sources.append(Source(id=source_id, url=url, title=url,
+                    publisher_type=publisher_type(url), retrieved_at=now,
+                    read_status="unavailable", note=str(exc)))
+                return False
             except (httpx.HTTPError, ValueError, OSError, RuntimeError) as exc:
                 warnings.append(f"无法读取 {url}: {str(exc)[:160]}")
                 failed_sources.append(Source(
@@ -1242,7 +1327,10 @@ def research(request: ResearchRequest, *, provider: str | None = None,
         for query in follow_up_queries(request, programmes):
             if search_backend == "manual" or len(pages) >= MAX_PAGES:
                 break
-            if search_backend == "brave":
+            if search_backend == "deepseek":
+                followup_urls = [hit["url"] for hit in run_deepseek_search(
+                    web_client, query, "gap_followup", search_log)]
+            elif search_backend == "brave":
                 followup_urls = brave_search_query(client, query, brave_key)
             elif search_backend == "browser":
                 followup_urls = [hit["url"] for hit in run_browser_search(query, "gap_followup", search_log)]

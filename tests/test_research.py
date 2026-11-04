@@ -208,18 +208,18 @@ class ResearchContractTests(unittest.TestCase):
         self.assertNotIn("https://www.example.edu/winter", urls)
         self.assertNotIn("https://other.edu/summer", urls)
 
-    def test_deepseek_key_alone_selects_browser_backend(self):
+    def test_deepseek_key_alone_selects_official_backend(self):
         request = self.request.model_copy(update={"programme_url": None})
         with patch.dict("os.environ", {
             "PATHLOOM_LLM_PROVIDER": "deepseek", "PATHLOOM_SEARCH_PROVIDER": "auto",
             "DEEPSEEK_API_KEY": "test-key", "BRAVE_API_KEY": "", "OPENAI_API_KEY": "",
         }), patch("research.deepseek_browser_search", return_value=["https://www.example.edu/summer"]), \
              patch("research.hku_catalog_search", return_value=[]), \
-             patch("research.read_page", return_value=self.page), \
+             patch("research.read_deepseek_page", return_value=self.page), \
              patch("research.extract_with_ai", return_value=Draft()):
             response = TestClient(app).post("/api/research?provider=deepseek", json=request.model_dump(mode="json"))
         self.assertEqual(response.status_code, 200, response.text)
-        self.assertIn("search:browser", response.json()["provider"])
+        self.assertIn("search:deepseek", response.json()["provider"])
 
     def test_decodes_bing_result_url(self):
         import base64

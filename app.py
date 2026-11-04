@@ -16,6 +16,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from models import ResearchRequest, ResearchResult
 from knowledge_base import KNOWLEDGE_PATH, retrieve_knowledge
 from research import research
+from deepseek_web import DeepSeekWebError
 
 from planner.schema import PlanRequest, load_plan_request
 from planner.timeline import build_plan, render_markdown as render_plan_markdown
@@ -24,7 +25,7 @@ from workflow import WorkflowRequest, plan_research, english_sample
 
 ROOT = Path(__file__).resolve().parent
 PLANNER_CASE_DIR = ROOT / "planner" / "cases"
-app = FastAPI(title="ExchangePrep Research + Planner Demo", version="0.3.0")
+app = FastAPI(title="ExchangePrep Research + Planner Demo", version="0.4.0")
 PUBLIC_ORIGINS = [origin.strip().rstrip("/") for origin in os.getenv(
     "EXCHANGEPREP_ALLOWED_ORIGINS", "https://gwdsd1.github.io").split(",") if origin.strip()]
 app.add_middleware(CORSMiddleware, allow_origins=PUBLIC_ORIGINS,
@@ -69,7 +70,7 @@ def run_workflow(payload: WorkflowRequest, request: Request,
     try:
         result = research(target, provider=payload.provider,
             api_key=x_api_key.strip(), model=payload.model or None,
-            search_backend="browser" if payload.provider == "deepseek" else "openai")
+            search_backend="deepseek" if payload.provider == "deepseek" else "openai")
         return plan_research(result, payload)
     except Exception as exc:
         # Never echo provider responses, request headers or key-bearing exceptions.
@@ -83,6 +84,12 @@ def run_workflow(payload: WorkflowRequest, request: Request,
                 "RateLimitError": "Rate limit or insufficient quota. Check your provider account.",
                 "APITimeoutError": "The model request timed out. Please retry."}.get(name,
                 f"Research or planning failed ({name}). Check the connection, model name and programme URL, then retry.")
+        if isinstance(exc, DeepSeekWebError) and exc.status_code in {401, 402}:
+            status = exc.status_code
+            message = ("DeepSeek Search/Fetch authentication failed. Check your API key." if status == 401 else
+                "DeepSeek account balance is insufficient for Search/Fetch.") if payload.language == "en" else (
+                "DeepSeek Search/Fetch 密钥认证失败，请检查 API Key。" if status == 401 else
+                "DeepSeek 账户余额不足，无法继续 Search/Fetch。")
         raise HTTPException(status_code=502, detail=message) from None
 
 
@@ -159,6 +166,7 @@ def config():
         "deepseek_configured": bool(os.getenv("DEEPSEEK_API_KEY")),
         "brave_configured": bool(os.getenv("BRAVE_API_KEY")),
         "knowledge_base_available": KNOWLEDGE_PATH.is_file(),
+        "web_workflow_search": {"deepseek": "deepseek_search_fetch", "openai": "openai_web_search"},
     }
 
 

@@ -1,5 +1,16 @@
 # ExchangePrep
 
+## 搜索方式更新（2026-11-04）
+
+- 网页选择 **DeepSeek**：默认使用官方 `POST /v1/tools/search` 查找网页、`POST /v1/tools/fetch` 读取正文，仍使用当前 DeepSeek 模型提取结构化要求。只需同一个个人 Key，无需升级为 V4 Pro。
+- 网页选择 **OpenAI**：继续使用 OpenAI 的内置网页搜索与提取，不会把 OpenAI Key 发给 DeepSeek。
+- Fetch 没有可用正文或发生可恢复错误时，使用已有公开 HTML 读取器补充；已知 PDF 沿用 PDF 读取器。登录入口只返回网址。认证／余额失败直接停止，Fetch 安全策略拒绝不以其他读取器绕过。
+- 搜索摘要只作线索，只有 Fetch 或直接读取的正文进入证据校验。来源 `note` 标明实际读取方式；`provider` 标明 `search:deepseek`，搜索记录注明官方 Search API。
+- 同一调查最多 20 次 Search、40 次 Fetch 网络尝试（包含重试），保留 28 页与智能体工具动作上限。只对连接／超时、408、429 和 5xx 做一次短重试。
+- 旧 `browser`、`brave`、`manual` 搜索配置仍可在开发接口／运行配置中显式使用；公开网页的默认流程采用上面的提供商选择。
+
+官方 Search／Fetch 各为 US$0.75／1,000 次成功请求，模型 Token 费用另计。失败或空搜索不按成功请求计费；价格以 [官方文档](https://api-docs.deepseek.com/guides/search/) 为准。不能保证所有网站可读或要求正确，仍需年度、适用性和来源核查。
+
 ## 整合版入口（2026-11-04）
 
 本仓库已整合联网调查、依赖建模和时间线生成。信息收集／提取由 Wang Zhengwei 完成，时间线模块来自 Gao Huaze 的 [Kura-cybc/COMP1110](https://github.com/Kura-cybc/COMP1110)。
@@ -92,8 +103,8 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\run_planner_demo.ps1
 
 当前已有功能：
 
-- 支持 OpenAI 或 DeepSeek 提取；搜索可使用 OpenAI、Brave、本机浏览器或指定官网的定向模式。
-- DeepSeek + 本机浏览器会先检索小红书公开索引中的 HKU 学生经验，再寻找官方要求。社媒摘要只作发现线索，不能单独证明本年度 DDL。
+- 支持 OpenAI 或 DeepSeek 提取；搜索默认使用 DeepSeek 官方 Search／Fetch，也可使用 OpenAI、Brave、本机浏览器或指定官网的定向模式。
+- DeepSeek 默认通过官方 Search API 检索小红书公开索引中的 HKU 学生经验，再寻找官方要求。社媒摘要只作发现线索，不能单独证明本年度 DDL。
 - 读取公开网页、PDF，以及部分网页预加载数据中的正文；记录访问失败或需要登录的入口。
 - 按操作、入口、截止规则、材料分别保留状态和证据；缺少确认时给出参考内容与核查事项。
 - 本地 Markdown 知识库覆盖 HKUWW、寒暑校登记／提名、材料、学分、资助、LoA、保险及十国签证线索。修改后下次查询即生效。
@@ -155,14 +166,14 @@ python -m venv .venv
 
 ```powershell
 $env:EXCHANGEPREP_LLM_PROVIDER = 'deepseek'
-$env:EXCHANGEPREP_SEARCH_PROVIDER = 'browser'
+$env:EXCHANGEPREP_SEARCH_PROVIDER = 'deepseek'
 $secureKey = Read-Host '请输入 DeepSeek API Key' -AsSecureString
 $env:DEEPSEEK_API_KEY = [System.Net.NetworkCredential]::new('', $secureKey).Password
 Remove-Variable secureKey
 .\.venv\Scripts\python.exe -m uvicorn app:app --host 127.0.0.1 --port 8000
 ```
 
-需要本机 Edge／Chrome；没有时安装 Playwright Chromium：
+只有显式启用旧 `browser` 搜索时需要本机 Edge／Chrome；没有时可安装 Playwright Chromium：
 
 ```powershell
 .\.venv\Scripts\python.exe -m playwright install chromium
@@ -170,7 +181,7 @@ Remove-Variable secureKey
 
 网页选择 DeepSeek，输入条件并发起调查。首次可先填具体项目官网，确认读取和提取可用，再留空测试自动发现。完整调查可能需要数分钟；模型请求会按服务账户计费。更改密钥或配置后须重启服务。
 
-其他模型、搜索配置见 [详细指南](DEMO_GUIDE.md)。自动搜索顺序为 Brave Key → OpenAI Key → DeepSeek 浏览器模式；若只想使用 DeepSeek，请显式设置 `browser`。当前代码默认模型为 `deepseek-flash`／`gpt-5-mini`，可用 `DEEPSEEK_MODEL`／`OPENAI_MODEL` 覆盖；实际可用性取决于提供商账户。旧 `PATHLOOM_*` 变量兼容，但 `EXCHANGEPREP_*` 优先。
+其他模型、搜索配置见 [详细指南](DEMO_GUIDE.md)。`auto` 在选择 DeepSeek 时使用官方 Search／Fetch；其他模型保留 Brave → OpenAI 搜索。旧浏览器模式可显式设置 `browser`。当前代码默认模型为 `deepseek-flash`／`gpt-5-mini`，可用 `DEEPSEEK_MODEL`／`OPENAI_MODEL` 覆盖；实际可用性取决于提供商账户。旧 `PATHLOOM_*` 变量兼容，但 `EXCHANGEPREP_*` 优先。
 
 密钥只在个人运行环境配置，不放进源码、README、截图或导出文件。程序没有自动加载 `.env` 的逻辑。
 

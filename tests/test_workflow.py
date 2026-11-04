@@ -88,6 +88,17 @@ class WorkflowTests(unittest.TestCase):
         self.assertEqual(response.status_code, 403)
         self.assertEqual(client.post("/api/workflow", json=data).status_code, 400)
 
+    def test_web_provider_dispatch_preserves_openai_and_selects_official_deepseek(self):
+        client = TestClient(app)
+        for provider, backend in [("deepseek", "deepseek"), ("openai", "openai")]:
+            data = settings().model_dump(mode="json")
+            data["provider"] = provider
+            with patch("app.research", return_value=fixture()) as model:
+                response = client.post("/api/workflow", json=data, headers={"X-API-Key":"request-key"})
+            self.assertEqual(response.status_code, 200)
+            self.assertEqual(model.call_args.kwargs["search_backend"], backend)
+            self.assertEqual(model.call_args.kwargs["provider"], provider)
+
     def test_english_sample_and_cross_origin_async_job(self):
         import time
         client=TestClient(app)
