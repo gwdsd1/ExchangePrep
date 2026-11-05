@@ -116,3 +116,10 @@ HKU 往届认可目录作为候选线索供模型选择，不再用目录前几�
 - 检测到登录网址、密码表单、401 或登录重定向时停止读取，`sources[].read_status=login_required`，界面只提供入口网址。不用用户登录态，不填写密码、不绕过验证码；403／动态页面不能确认是否需登录时仍标 unavailable。
 
 项目显示名已改为 **ExchangePrep**，导出文件为 `exchangeprep_research_result.json`。本指南由原 README 重命名保留；原本地目录为 `ExchangePrep_webinformationcollection`，发布到 GitHub 后项目文件位于仓库根目录。旧 `PATHLOOM_LLM_PROVIDER`、`PATHLOOM_SEARCH_PROVIDER` 仍兼容，新 `EXCHANGEPREP_*` 优先。密钥环境变量不变。
+
+
+### 候选不足时的行为（2026-11-05）
+
+先读取多个候选的概览，筛选后才深入整理申请步骤。结果少于 `max_programmes` 时，最多做两轮候选补搜（每轮两个查询），而非只补查已有项目的材料。使用所有搜索提供商时均适用；manual 定向模式除外。补搜仍受本次读取及 API 预算限制。
+
+查看页面顶部的不足说明与“候选筛选说明”：`excluded` 表示有证据表明不符合条件，`unconfirmed` 表示关键年度／资格信息未确认，均不用于补足案例数。已选项目的一般材料或截止日期缺失则继续标记待核查，不单独因此淘汰。完整 JSON 新增 `candidate_reviews`、`coverage_summary`，`search_log.purpose=candidate_replenishment` 表示寻找额外候选。没有凑足不等于没有其他项目。

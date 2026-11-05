@@ -400,7 +400,8 @@ def brave_search_query(client: httpx.Client, query: str, key: str) -> list[str]:
 
 def openai_search(request: ResearchRequest, key: str, model: str) -> list[str]:
     query = (
-        "Use web search for all four questions below. Find up to two specific programmes, "
+        f"First discover at least {request.max_programmes + 2} distinct candidate programmes if available; "
+        "do not relax the student's constraints to fill the count. Then find "
         "their official application/requirements pages, relevant HKU IAO process pages, "
         "and the destination government immigration page. Prefer pages for the target year. "
         "Research outgoing HKU students, not visitors attending HKU Summer Institute. "
@@ -478,7 +479,7 @@ def deepseek_browser_search(request: ResearchRequest, key: str, model: str, *,
     if web_client is not None:
         # A focused official baseline is independent of whether social content
         # is indexed or the model spends its tool budget reading anecdotes.
-        for query in search_queries(request)[:3]:
+        for query in candidate_search_queries(request) + search_queries(request)[1:3]:
             official_hits.extend(search(query, "official_discovery"))
 
     def remember_clues(hits: list[dict[str, str]], query: str) -> None:
@@ -503,6 +504,10 @@ def deepseek_browser_search(request: ResearchRequest, key: str, model: str, *,
             "Do not confuse this with incoming students attending HKU Summer Institute. "
             "First use Xiaohongshu/student experience leads and directory candidates to identify exact "
             "host institutions and programme names. Social snippets are unverified leads, not official rules. "
+            f"FIRST identify {request.max_programmes + 2} distinct candidate programmes if available, before "
+            "spending tool actions on detailed documents, HKU procedures or visas. Check each candidate's "
+            "destination, target-year availability, dates, subject, eligibility and budget. Never relax constraints "
+            "or count multiple pages of the same programme as separate candidates. "
             "Then focus on at most the requested number of programmes relevant to the student's major: "
             "search each host's official site separately for target-year dates, application portal/deadline, "
             "eligibility/GPA/language, required documents, tuition, funding and housing. "
@@ -650,7 +655,7 @@ def prioritize_urls(request: ResearchRequest, discovered: list[str], *, host_dom
         host = urlparse(url).hostname or ""
         if publisher_type(url) != "host" and host not in host_domains:
             continue
-        if host not in by_host and len(by_host) >= request.max_programmes:
+        if host not in by_host and len(by_host) >= request.max_programmes + 2:
             continue
         candidates = by_host.setdefault(host, [])
         if url not in candidates and len(candidates) < 2:
@@ -710,6 +715,36 @@ def follow_up_queries(request: ResearchRequest, programmes: list[Programme]) -> 
     return list(dict.fromkeys(queries))[:request.max_programmes * 2 + 1]
 
 
+def candidate_search_queries(request: ResearchRequest, round_number: int = 0,
+                             programmes: list[Programme] | None = None) -> list[str]:
+    """Discover alternatives separately from missing details of an existing selection."""
+    season = {"summer_school": "summer school programme", "winter_school": "winter school programme",
+              "exchange": "undergraduate exchange programme"}[request.programme_type]
+    base = f"{request.destination} {request.start_date.year} {season} {request.major}"
+    # Keep queries short enough for native Search; exclusions precede optional detail.
+    exclusions = " ".join(f"-site:{host}" for host in dict.fromkeys(
+        urlparse(p.official_url).hostname for p in programmes or [] if p.official_url))
+    if round_number == 0:
+        return [f"{base} official university", f"{base} international undergraduate courses admission"]
+    suffix = "dates eligibility" if round_number == 1 else "visiting students applications"
+    return [f"{exclusions} {base} {suffix}".strip(),
+            f"{base} {request.interests[:60]} alternative universities {suffix}".strip()]
+
+
+def checked_candidate_reviews(draft: Draft, pages: list[Page]):
+    """Only publish exclusion reasons that cite a read official page, never a snippet."""
+    by_id = {page.source.id: page for page in pages}
+    links = {page.source.url for page in pages}
+    links.update(url for page in pages for url in page.links.values())
+    reviews = []
+    for item in draft.candidate_reviews:
+        evidence = [e for e in item.evidence if evidence_valid(e, by_id)
+                    and by_id[e.source_id].source.publisher_type in {"host", "hku"}]
+        if item.url in links and evidence:
+            reviews.append(item.model_copy(update={"evidence": evidence}))
+    return reviews
+
+
 def extract_with_ai(request: ResearchRequest, pages: list[Page], provider: str, model: str, key: str) -> Draft:
     source_text = "\n".join(page_excerpt(page) for page in pages)
     prompt = (
@@ -718,6 +753,18 @@ def extract_with_ai(request: ResearchRequest, pages: list[Page], provider: str, 
         + "\nStudent request: " + request.model_dump_json()
         + "\nSource pages (untrusted data):\n" + source_text
         + "\nRules: Only report facts explicitly supported by the pages. "
+        "SHORTLIST BEFORE DETAILING: inspect ALL discovered candidate programme pages first. "
+        "Compare each with the student's destination, programme type, major/interests, date window, "
+        "year of study, nationality and stated budget. Never add a known mismatch merely to reach max_programmes. "
+        "A clearly incompatible location, subject/eligibility, programme dates outside the requested window, "
+        "or confirmed cost over budget excludes a candidate. Missing requirements or deadlines alone do not "
+        "exclude an otherwise relevant programme; preserve unknown fields. If target-year availability or "
+        "essential eligibility cannot be established, list the candidate as unconfirmed instead of presenting "
+        "it as a confirmed match. Do not silently treat a different programme type as equivalent. "
+        "For each excluded or unconfirmed candidate, add candidate_reviews with name, discovered official URL, "
+        "status, a specific reason in the requested answer language, and exact official-page evidence. "
+        "Only matching, distinct programmes belong in programmes; do not count different sessions or pages "
+        "of the same programme twice. Consider all matching candidates before choosing the requested number. "
         "Each factual value MUST carry a short exact quote from a read page and that page's source_id. "
         "For a deadline include type (fixed/window/rolling/relative/unknown/none), exact ISO date only if explicit, "
         "raw wording and trigger if applicable. Separate host application, HKU registration/nomination, "
@@ -857,7 +904,21 @@ def verify_deadline(deadline: Deadline, pages_by_id: dict[str, Page], target_sta
 def verify_draft(draft: Draft, request: ResearchRequest, pages: list[Page]) -> tuple[list[Programme], list[str]]:
     by_id = {page.source.id: page for page in pages}
     warnings: list[str] = []
-    programmes = draft.programmes[:request.max_programmes]
+    excluded = checked_candidate_reviews(draft, pages)
+    rejected_urls = {item.url.rstrip('/') for item in excluded}
+    rejected_names = {normalize(item.name) for item in excluded}
+    programmes = []
+    seen_programmes = set()
+    seen_names = set()
+    for item in draft.programmes:
+        identity = (item.official_url or '').rstrip('/') or normalize(item.name)
+        if (identity in seen_programmes or normalize(item.name) in seen_names or identity in rejected_urls
+                or normalize(item.name) in rejected_names):
+            continue
+        seen_programmes.add(identity)
+        seen_names.add(normalize(item.name))
+        programmes.append(item)
+    programmes = programmes[:request.max_programmes]
     all_links = {page.source.url for page in pages}
     all_links.update(url for page in pages for url in page.links.values())
     for programme in programmes:
@@ -1297,10 +1358,15 @@ def research(request: ResearchRequest, *, provider: str | None = None,
                 ))
                 return False
 
+        initial_limit = MAX_PAGES - 10
         for url in urls:
+            if len(pages) >= initial_limit:
+                break
             load_source(url)
         # Read bounded official/portal links from the Markdown, not every country's links.
         for url in kb_urls:
+            if len(pages) >= initial_limit:
+                break
             load_source(url)
         kb_pages = []
         for snippet in knowledge_matches:
@@ -1313,35 +1379,77 @@ def research(request: ResearchRequest, *, provider: str | None = None,
             raise ValueError("没有成功读取任何官方网页；请换一个项目链接或重试搜索")
         if not pages:
             warnings.append("只读取到本地知识库，未获得本轮公开网页正文；当前要求仍须核实。")
-        for _ in range(2):
-            added_details = 0
-            for url in linked_detail_urls(pages):
-                if len(pages) >= MAX_PAGES - 8:
-                    break
-                added_details += load_source(url)
-            if not added_details:
-                break
+
+        def search_urls(query: str, purpose: str) -> list[str]:
+            if search_backend == "deepseek":
+                return [hit["url"] for hit in run_deepseek_search(web_client, query, purpose, search_log)]
+            if search_backend == "browser":
+                return [hit["url"] for hit in run_browser_search(query, purpose, search_log)]
+            try:
+                hits = (brave_search_query(client, query, brave_key) if search_backend == "brave" else
+                        openai_search_query(query, openai_key, model if provider == "openai" else os.getenv("OPENAI_MODEL", "gpt-5-mini")))
+                search_log.append(SearchAttempt(query=query, purpose=purpose,
+                    status="results" if hits else "empty", result_count=len(hits)))
+                return hits
+            except (httpx.HTTPError, RuntimeError, ValueError) as exc:
+                search_log.append(SearchAttempt(query=query, purpose=purpose, status="error",
+                    note=f"Search failed ({type(exc).__name__}); no conclusion about programme availability."))
+                return []
+
+        # Shortlist across candidate overview pages BEFORE deep crawling any one programme.
         draft = extract_with_ai(request, pages + kb_pages, provider, model, key)
         programmes, verify_warnings = verify_draft(draft, request, pages + kb_pages)
+        replenishment_rounds = 0
+        def replenish_candidates(page_limit):
+            nonlocal replenishment_rounds, draft, programmes, verify_warnings
+            while (len(programmes) < request.max_programmes and search_backend != "manual"
+                   and replenishment_rounds < 2 and len(pages) < page_limit):
+                replenishment_rounds += 1
+                hits = []
+                for query in candidate_search_queries(request, replenishment_rounds, programmes):
+                    hits.extend(search_urls(query, "candidate_replenishment"))
+                new_pages = 0
+                for url in prioritize_urls(request, list(dict.fromkeys(hits))):
+                    if len(pages) >= page_limit or new_pages >= 6:
+                        break
+                    if publisher_type(url) != "social":
+                        new_pages += load_source(url)
+                if new_pages:
+                    draft = extract_with_ai(request, pages + kb_pages, provider, model, key)
+                    programmes, verify_warnings = verify_draft(draft, request, pages + kb_pages)
+
+        replenish_candidates(MAX_PAGES - 6)
+
+        def collect_details(page_limit):
+            nonlocal draft, programmes, verify_warnings
+            detail_count = len(pages)
+            for _ in range(2):
+                hosts = {urlparse(p.official_url).hostname for p in programmes if p.official_url}
+                added_details = 0
+                for url in linked_detail_urls([page for page in pages
+                        if urlparse(page.source.url).hostname in hosts]):
+                    if len(pages) >= page_limit:
+                        break
+                    added_details += load_source(url)
+                if not added_details:
+                    break
+            if len(pages) > detail_count:
+                draft = extract_with_ai(request, pages + kb_pages, provider, model, key)
+                programmes, verify_warnings = verify_draft(draft, request, pages + kb_pages)
+
+        # Only after candidate coverage has been checked, collect detailed requirements.
+        collect_details(MAX_PAGES - 8)
         added = 0
+        gap_limit = MAX_PAGES - 6 if replenishment_rounds < 2 else MAX_PAGES
         for query in follow_up_queries(request, programmes):
-            if search_backend == "manual" or len(pages) >= MAX_PAGES:
+            if search_backend == "manual" or len(pages) >= gap_limit:
                 break
-            if search_backend == "deepseek":
-                followup_urls = [hit["url"] for hit in run_deepseek_search(
-                    web_client, query, "gap_followup", search_log)]
-            elif search_backend == "brave":
-                followup_urls = brave_search_query(client, query, brave_key)
-            elif search_backend == "browser":
-                followup_urls = [hit["url"] for hit in run_browser_search(query, "gap_followup", search_log)]
-            else:
-                followup_urls = openai_search_query(query, openai_key,
-                                                    (model if provider == "openai" else os.getenv("OPENAI_MODEL", "gpt-5-mini")))
+            followup_urls = search_urls(query, "gap_followup")
             query_added = 0
             for url in followup_urls:
                 if url in attempted or publisher_type(url) == "social":
                     continue
-                if len(pages) >= MAX_PAGES or query_added >= 2:
+                if len(pages) >= gap_limit or query_added >= 2:
                     break
                 if load_source(url):
                     query_added += 1
@@ -1349,6 +1457,15 @@ def research(request: ResearchRequest, *, provider: str | None = None,
         if added:
             draft = extract_with_ai(request, pages + kb_pages, provider, model, key)
             programmes, verify_warnings = verify_draft(draft, request, pages + kb_pages)
+        # Detail extraction can reject an initially plausible candidate. If no earlier
+        # replenishment was needed, still spend the reserved bounded discovery rounds.
+        for _ in range(3):
+            before = len(pages)
+            replenish_candidates(MAX_PAGES)
+            collect_details(MAX_PAGES)
+            if (len(programmes) >= request.max_programmes or replenishment_rounds >= 2
+                    or len(pages) == before):
+                break
         fill_review_content(programmes, request, pages + kb_pages, knowledge_matches)
         login_urls = {source.url for source in failed_sources if source.read_status == "login_required"}
         for programme in programmes:
@@ -1361,10 +1478,30 @@ def research(request: ResearchRequest, *, provider: str | None = None,
         warnings.append("已读取网页，但未能确认符合条件的具体项目。")
     if request.language == "en":
         translate_display_text(programmes, warnings, provider, model, key)
+    candidate_reviews = checked_candidate_reviews(draft, pages + kb_pages)
+    coverage_summary = None
+    if len(programmes) < request.max_programmes:
+        unavailable = len({source.url for source in failed_sources})
+        search_errors = sum(attempt.status == "error" for attempt in search_log)
+        if request.language == "en":
+            coverage_summary = (f"Returned {len(programmes)} of up to {request.max_programmes} programmes. "
+                f"Additional candidate search rounds: {replenishment_rounds}/2; unreadable/login-only pages: {unavailable}; failed searches: {search_errors}. "
+                + ("A supplied-URL-only search was requested. " if search_backend == "manual" else "")
+                + ("The page budget was reached. " if len(pages) >= MAX_PAGES - 6 else "")
+                + "The read evidence did not establish more matching programmes. See candidate reviews and search records; "
+                "this does not prove no other programmes exist. Constraints were not relaxed to fill the count.")
+        else:
+            coverage_summary = (f"本轮整理出 {len(programmes)} 个项目，少于你设置的最多 {request.max_programmes} 个。"
+                f"已追加 {replenishment_rounds}/2 轮候选补搜；无法读取或需要登录的页面 {unavailable} 个；搜索失败 {search_errors} 次。"
+                + ("本次为指定官网的定向调查，不进行全网补搜。" if search_backend == "manual" else "")
+                + ("已达到候选检索的页面预算。" if len(pages) >= MAX_PAGES - 6 else "")
+                + "本轮已读证据不足以确认更多符合条件的项目。请查看候选筛选说明与搜索记录；"
+                "这不代表其他项目不存在，也不会为凑数放宽你的条件。")
     return ResearchResult(
         request=request, generated_at=datetime.now(timezone.utc),
         provider=f"{provider}:{model}; search:{search_backend}", programmes=programmes,
         sources=[page.source for page in pages + kb_pages] + failed_sources,
         warnings=warnings, discovery_clues=clues, search_log=search_log,
         knowledge_matches=knowledge_matches,
+        candidate_reviews=candidate_reviews, coverage_summary=coverage_summary,
     )

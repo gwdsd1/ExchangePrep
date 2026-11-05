@@ -35,6 +35,7 @@ class WorkflowBrowserTests(unittest.TestCase):
         result = ResearchResult.model_validate_json((ROOT / 'sample.json').read_text(encoding='utf-8'))
         result.programmes[0].name = 'Browser integration programme'
         result.warnings = ['Example HTTP 403 access warning']
+        result.coverage_summary = '本轮整理出 1 个项目；已追加 2/2 轮候选补搜。'
         try:
             with sync_playwright() as p:
                 browser = p.chromium.launch(executable_path=str(EDGE), headless=True)
@@ -54,6 +55,7 @@ class WorkflowBrowserTests(unittest.TestCase):
                         page.locator('#run').click()
                         page.get_by_role('heading', name='Browser integration programme', exact=True).wait_for()
                         self.assertEqual(mock.call_args.kwargs['api_key'], 'browser-test-secret')
+                    self.assertTrue(page.get_by_text(result.coverage_summary, exact=True).is_visible())
                     self.assertFalse(page.get_by_text('Example HTTP 403 access warning', exact=True).is_visible())
                     self.assertFalse(page.locator('.diagnostics').first.evaluate('(e) => e.open'))
                     page.locator('.diagnostics summary').first.click()
@@ -69,6 +71,13 @@ class WorkflowBrowserTests(unittest.TestCase):
                     self.assertEqual(page.evaluate('Object.keys(sessionStorage)'), [])
                     (ROOT/'tmp').mkdir(exist_ok=True)
                     page.screenshot(path=str(ROOT/'tmp/workflow-desktop.png'),full_page=True)
+                    from models import CandidateReview
+                    result.candidate_reviews = [CandidateReview(name='Excluded school',url='https://example.edu',status='excluded',reason='Graduate students only')]
+                    with patch('app.research', return_value=result):
+                        page.locator('#run').click()
+                        page.get_by_text('候选筛选说明',exact=True).wait_for()
+                    page.get_by_text('候选筛选说明',exact=True).click()
+                    self.assertTrue(page.get_by_text('Excluded school · 不符合条件: Graduate students only',exact=True).is_visible())
                     page.set_viewport_size({'width':390,'height':844})
                     self.assertTrue(page.evaluate('document.documentElement.scrollWidth <= innerWidth'))
                     page.screenshot(path=str(ROOT/'tmp/workflow-mobile.png'),full_page=True)

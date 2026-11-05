@@ -25,7 +25,7 @@ from workflow import WorkflowRequest, plan_research, english_sample
 
 ROOT = Path(__file__).resolve().parent
 PLANNER_CASE_DIR = ROOT / "planner" / "cases"
-app = FastAPI(title="ExchangePrep Research + Planner Demo", version="0.4.0")
+app = FastAPI(title="ExchangePrep Research + Planner Demo", version="0.5.0")
 PUBLIC_ORIGINS = [origin.strip().rstrip("/") for origin in os.getenv(
     "EXCHANGEPREP_ALLOWED_ORIGINS", "https://gwdsd1.github.io").split(",") if origin.strip()]
 app.add_middleware(CORSMiddleware, allow_origins=PUBLIC_ORIGINS,
@@ -166,6 +166,7 @@ def config():
         "deepseek_configured": bool(os.getenv("DEEPSEEK_API_KEY")),
         "brave_configured": bool(os.getenv("BRAVE_API_KEY")),
         "knowledge_base_available": KNOWLEDGE_PATH.is_file(),
+        "candidate_replenishment_rounds": 2,
         "web_workflow_search": {"deepseek": "deepseek_search_fetch", "openai": "openai_web_search"},
     }
 

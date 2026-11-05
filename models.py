@@ -114,7 +114,7 @@ class DiscoveryClue(BaseModel):
 
 class SearchAttempt(BaseModel):
     query: str
-    purpose: Literal["social_discovery", "official_discovery", "gap_followup"]
+    purpose: Literal["social_discovery", "official_discovery", "candidate_replenishment", "gap_followup"]
     status: Literal["results", "empty", "error"]
     result_count: int = 0
     note: str | None = None
@@ -125,6 +125,14 @@ class KnowledgeSnippet(BaseModel):
     title: str
     text: str
     links: dict[str, str] = Field(default_factory=dict)
+
+
+class CandidateReview(BaseModel):
+    name: str
+    url: str
+    status: Literal["excluded", "unconfirmed"]
+    reason: str
+    evidence: list[Evidence] = Field(default_factory=list)
 
 
 class ResearchResult(BaseModel):
@@ -138,12 +146,15 @@ class ResearchResult(BaseModel):
     discovery_clues: list[DiscoveryClue] = Field(default_factory=list)
     search_log: list[SearchAttempt] = Field(default_factory=list)
     knowledge_matches: list[KnowledgeSnippet] = Field(default_factory=list)
+    candidate_reviews: list[CandidateReview] = Field(default_factory=list)
+    coverage_summary: str | None = None
 
 
 class Draft(BaseModel):
     """LLM output. Evidence and factual fields are re-checked before hand-off."""
 
     programmes: list[Programme] = Field(default_factory=list)
+    candidate_reviews: list[CandidateReview] = Field(default_factory=list)
 
 
 class TranslationDraft(BaseModel):

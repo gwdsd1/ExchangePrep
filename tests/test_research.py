@@ -216,7 +216,8 @@ class ResearchContractTests(unittest.TestCase):
         }), patch("research.deepseek_browser_search", return_value=["https://www.example.edu/summer"]), \
              patch("research.hku_catalog_search", return_value=[]), \
              patch("research.read_deepseek_page", return_value=self.page), \
-             patch("research.extract_with_ai", return_value=Draft()):
+             patch("research.extract_with_ai", return_value=Draft()), \
+             patch("research.run_deepseek_search", return_value=[]):
             response = TestClient(app).post("/api/research?provider=deepseek", json=request.model_dump(mode="json"))
         self.assertEqual(response.status_code, 200, response.text)
         self.assertIn("search:deepseek", response.json()["provider"])

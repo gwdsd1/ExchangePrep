@@ -133,11 +133,12 @@ class WorkflowTests(unittest.TestCase):
                 "research.openai_search", return_value=[]) as search, patch(
                 "research.read_page", side_effect=ValueError("offline test")), patch(
                 "research.extract_with_ai", side_effect=lambda r,p,provider,model,key:
-                    captured.append((model,key)) or Draft()):
+                    captured.append((model,key)) or Draft()), patch("research.openai_search_query", return_value=[]) as refill:
             research(request, provider="openai", api_key="request-key", model="test-model",
                      search_backend="openai")
         self.assertEqual(search.call_args.args[1:], ("request-key", "test-model"))
         self.assertEqual(captured, [("test-model", "request-key")])
+        self.assertTrue(all(call.args[1:] == ("request-key", "test-model") for call in refill.call_args_list))
 
 
 if __name__ == "__main__":
